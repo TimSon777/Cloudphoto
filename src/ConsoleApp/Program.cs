@@ -1,17 +1,60 @@
 ﻿using Amazon.S3;
 using CommandLine;
+using ConsoleApp;
 using ConsoleApp.CommandHandlers;
 using ConsoleApp.Commands;
+using ConsoleApp.Objects;
 
 var cts = new CancellationTokenSource();
-var result = Parser.Default.ParseArguments<InitCommand, VersionCommand>(args);
+var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, UploadCommand>(args);
 
 try
 {
-    await result.WithParsedAsync<VersionCommand>(async command =>
-        await new VersionCommandHandler().HandleAsync(command, cts.Token));
     await result.WithParsedAsync<InitCommand>(async command =>
         await new InitCommandHandler().HandleAsync(command, cts.Token));
+    await result.WithParsedAsync<VersionCommand>(async command =>
+        await new VersionCommandHandler().HandleAsync(command, cts.Token));
+
+    if (result.Value is not InitCommand && result.Value is not VersionCommand)
+    {
+        var configExists = await Utils.IsConfigExistsAsync(cts.Token);
+        if (!configExists)
+        {
+            await Console.Error.WriteLineAsync(
+                "Config file wasn't found. Please, use command `cloudphoto init` to set it");
+
+            return (int)Code.ConfigFileNotFound;
+        }
+
+        var (config, getConfigResult) = await Utils.TryGetConfigAsync(cts.Token);
+
+        switch (getConfigResult)
+        {
+            case GetConfigResult.Success:
+                var amazonS3 = new AmazonS3Client(config!.AwsAccessKey, config.AwsSecretKey, new AmazonS3Config
+                {
+                    ServiceURL = config.EndpointUrl,
+                    AuthenticationRegion = config.Region
+                });
+                
+                await result.WithParsedAsync<UploadCommand>(async command =>
+                    await new UploadCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
+                break;
+            case GetConfigResult.WrongProfile:
+                await Console.Error.WriteLineAsync("Profile has wrong format. Now supports only `[DEFAULT]` profile. Please, use `cloudphoto init` command to reconfigure it");
+                return (int)Code.WrongProfile;
+            case GetConfigResult.WrongCountLines:
+                await Console.Error.WriteLineAsync(
+                    $"Not all options are presented:\n{string.Join("\n", Constants.ConfigOptions)}\nPlease, use `cloudphoto init` command to reconfigure it");
+                return (int)Code.WrongCountLines;
+            case GetConfigResult.WrongOptions:
+                await Console.Error.WriteLineAsync(
+                    "Your configuration file is corrupted. Please, use `cloudphoto init` command to reconfigure it");
+                return (int)Code.WrongOptions;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
 }
 catch (AmazonS3Exception ex)
     when (ex.Message ==
@@ -24,3 +67,5 @@ catch (AmazonS3Exception ex)
 {
     await Console.Error.WriteLineAsync("Credentials don't have sufficient rights");
 }
+
+return (int)Code.Success;

@@ -1,6 +1,7 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using ConsoleApp.Commands;
+using ConsoleApp.Objects;
 
 namespace ConsoleApp.CommandHandlers;
 
@@ -47,25 +48,16 @@ public sealed class InitCommandHandler : ICommandHandler<InitCommand>
             }
         }
 
-        var pathToFile = Utils.GetPathToConfigFile(includeFileName: true);
-        var pathToDirectory = Utils.GetPathToConfigFile(includeFileName: false);
-
-        if (!Directory.Exists(pathToDirectory))
+        var config = new Config
         {
-            Directory.CreateDirectory(pathToDirectory);
-        }
+            BucketName = bucketName,
+            AwsAccessKey = accessKey,
+            AwsSecretKey = secretKey,
+            Region = Constants.Region,
+            EndpointUrl = Constants.S3EndpointUrl
+        };
 
-        var fileBody =
-            $"""
-             [DEFAULT]
-             bucket = {bucketName}
-             aws_access_key_id = {accessKey}
-             aws_secret_access_key = {secretKey}
-             region = {Constants.Region}
-             endpoint_url = {Constants.S3EndpointUrl}
-             """;
-
-        await File.WriteAllTextAsync(pathToFile, fileBody, cancellationToken);
+        await Utils.SaveConfigAsync(config, cancellationToken);
     }
 
     private static async Task<string> ReadParamAsync(string displayParamName)
