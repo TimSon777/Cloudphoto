@@ -9,7 +9,10 @@ public sealed class UploadCommandHandler(IAmazonS3 amazonS3, Config config) : IC
 {
     public async Task HandleAsync(UploadCommand command, CancellationToken cancellationToken)
     {
-        var path = Path.Combine(Environment.CurrentDirectory, command.Path);
+        var path = Path.IsPathFullyQualified(command.Path)
+            ? command.Path
+            : Path.Combine(Environment.CurrentDirectory, command.Path);
+        
         var directory = new DirectoryInfo(path);
 
         var tasks = directory

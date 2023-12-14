@@ -36,12 +36,13 @@ try
                     ServiceURL = config.EndpointUrl,
                     AuthenticationRegion = config.Region
                 });
-                
+
                 await result.WithParsedAsync<UploadCommand>(async command =>
                     await new UploadCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
                 break;
             case GetConfigResult.WrongProfile:
-                await Console.Error.WriteLineAsync("Profile has wrong format. Now supports only `[DEFAULT]` profile. Please, use `cloudphoto init` command to reconfigure it");
+                await Console.Error.WriteLineAsync(
+                    "Profile has wrong format. Now supports only `[DEFAULT]` profile. Please, use `cloudphoto init` command to reconfigure it");
                 return (int)Code.WrongProfile;
             case GetConfigResult.WrongCountLines:
                 await Console.Error.WriteLineAsync(
@@ -61,11 +62,18 @@ catch (AmazonS3Exception ex)
           "The request signature we calculated does not match the signature you provided. Check your key and signing method.")
 {
     await Console.Error.WriteLineAsync("Authentication failed. You may have entered the wrong credentials");
+    return (int)Code.InvalidCredentials;
 }
 catch (AmazonS3Exception ex)
     when (ex.Message == "Access Denied")
 {
     await Console.Error.WriteLineAsync("Credentials don't have sufficient rights");
+    return (int)Code.AccessDenied;
+}
+catch (DirectoryNotFoundException)
+{
+    await Console.Error.WriteLineAsync("Directory not found");
+    return (int)Code.DirectoryDoesntExist;
 }
 
 return (int)Code.Success;

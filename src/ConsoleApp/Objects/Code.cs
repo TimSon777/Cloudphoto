@@ -6,5 +6,8 @@ public enum Code
     WrongProfile,
     WrongCountLines,
     WrongOptions,
-    ConfigFileNotFound
+    ConfigFileNotFound,
+    AccessDenied,
+    InvalidCredentials,
+    DirectoryDoesntExist
 }
