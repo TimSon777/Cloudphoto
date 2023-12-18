@@ -9,13 +9,9 @@ public sealed class UploadCommandHandler(IAmazonS3 amazonS3, Config config) : IC
 {
     public async Task HandleAsync(UploadCommand command, CancellationToken cancellationToken)
     {
-        var path = Path.IsPathFullyQualified(command.Path)
-            ? command.Path
-            : Path.Combine(Environment.CurrentDirectory, command.Path);
-        
-        var directory = new DirectoryInfo(path);
+        var path = Utils.GetFullPath(command.Path);
 
-        var tasks = directory
+        var tasks = new DirectoryInfo(path)
             .GetFiles("*.*", SearchOption.TopDirectoryOnly)
             .Where(f => f.Extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
                 || f.Extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase))

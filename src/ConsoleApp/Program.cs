@@ -6,7 +6,7 @@ using ConsoleApp.Commands;
 using ConsoleApp.Objects;
 
 var cts = new CancellationTokenSource();
-var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, UploadCommand>(args);
+var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, DownloadCommand, UploadCommand>(args);
 
 try
 {
@@ -39,6 +39,8 @@ try
 
                 await result.WithParsedAsync<UploadCommand>(async command =>
                     await new UploadCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
+                await result.WithParsedAsync<DownloadCommand>(async command =>
+                    await new DownloadCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
                 break;
             case GetConfigResult.WrongProfile:
                 await Console.Error.WriteLineAsync(
@@ -75,5 +77,9 @@ catch (DirectoryNotFoundException)
     await Console.Error.WriteLineAsync("Directory not found");
     return (int)Code.DirectoryDoesntExist;
 }
-
+catch (UnauthorizedAccessException)
+{
+    await Console.Error.WriteLineAsync("Lack of permission to write to the directory");
+    return (int)Code.DirectoryAccessDenied;
+}
 return (int)Code.Success;
