@@ -5,7 +5,7 @@ namespace ConsoleApp.Commands;
 [Verb("download")]
 public sealed class DownloadCommand : ICommand
 {
-    [Option("album")]
+    [Option("album", Required = true)]
     public string Album { get; set; } = default!;
 
     private string _path = default!;

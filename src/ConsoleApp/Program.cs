@@ -3,10 +3,11 @@ using CommandLine;
 using ConsoleApp;
 using ConsoleApp.CommandHandlers;
 using ConsoleApp.Commands;
+using ConsoleApp.Exceptions;
 using ConsoleApp.Objects;
 
 var cts = new CancellationTokenSource();
-var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, DownloadCommand, UploadCommand>(args);
+var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, DownloadCommand, UploadCommand, ListCommand>(args);
 
 try
 {
@@ -41,6 +42,8 @@ try
                     await new UploadCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
                 await result.WithParsedAsync<DownloadCommand>(async command =>
                     await new DownloadCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
+                await result.WithParsedAsync<ListCommand>(async command =>
+                    await new ListCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
                 break;
             case GetConfigResult.WrongProfile:
                 await Console.Error.WriteLineAsync(
@@ -82,4 +85,16 @@ catch (UnauthorizedAccessException)
     await Console.Error.WriteLineAsync("Lack of permission to write to the directory");
     return (int)Code.DirectoryAccessDenied;
 }
+catch (AmazonS3Exception ex)
+    when (ex.Message == "The specified key does not exist.")
+{
+    await Console.Error.WriteLineAsync("File / Directory doesn't exist");
+    return (int)Code.YandexCloudDirectoryDoesntExist;
+}
+catch (NoObjectsException)
+{
+    await Console.Error.WriteLineAsync("Objects were not found.");
+    return (int)Code.ObjectsNotFound;
+}
+
 return (int)Code.Success;
