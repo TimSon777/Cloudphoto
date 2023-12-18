@@ -10,5 +10,7 @@ public enum Code
     AccessDenied,
     InvalidCredentials,
     DirectoryDoesntExist,
-    DirectoryAccessDenied
+    DirectoryAccessDenied,
+    YandexCloudDirectoryDoesntExist,
+    ObjectsNotFound
 }
