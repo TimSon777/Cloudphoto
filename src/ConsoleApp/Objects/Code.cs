@@ -9,5 +9,6 @@ public enum Code
     ConfigFileNotFound,
     AccessDenied,
     InvalidCredentials,
-    DirectoryDoesntExist
+    DirectoryDoesntExist,
+    DirectoryAccessDenied
 }

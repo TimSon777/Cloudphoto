@@ -79,4 +79,17 @@ public static class Utils
 
         string GetValue(string paramName) => lines.First(line => line.StartsWith(paramName, StringComparison.CurrentCultureIgnoreCase)).Split(" = ")[1];
     }
+
+    public static string GetFullPath(string path)
+    {
+        return Path.IsPathFullyQualified(path)
+            ? path
+            : Path.Combine(Environment.CurrentDirectory, path);
+    }
+
+    public static void EnsureDirectoryWritable(string directoryPath)
+    {
+        var pathToFile = Path.Combine(directoryPath, Path.GetRandomFileName());
+        using var fileStream = File.Create(pathToFile, 1, FileOptions.DeleteOnClose);
+    }
 }
