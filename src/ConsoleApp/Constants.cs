@@ -13,4 +13,6 @@ public static class Constants
         "region",
         "endpoint_url"
     };
+
+    public static readonly string HtmlTemplatesDirectory = $@"{AppContext.BaseDirectory}Resources\HtmlTemplates\";
 }
