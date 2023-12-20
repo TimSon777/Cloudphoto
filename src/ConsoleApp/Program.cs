@@ -7,7 +7,7 @@ using ConsoleApp.Exceptions;
 using ConsoleApp.Objects;
 
 var cts = new CancellationTokenSource();
-var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, DownloadCommand, UploadCommand, DeleteCommand, ListCommand>(args);
+var result = Parser.Default.ParseArguments<InitCommand, VersionCommand, DownloadCommand, UploadCommand, DeleteCommand, MakeSiteCommand, ListCommand>(args);
 
 try
 {
@@ -46,6 +46,8 @@ try
                     await new ListCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
                 await result.WithParsedAsync<DeleteCommand>(async command =>
                     await new DeleteCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
+                await result.WithParsedAsync<MakeSiteCommand>(async command =>
+                    await new MakeSiteCommandHandler(amazonS3, config).HandleAsync(command, cts.Token));
                 break;
             case GetConfigResult.WrongProfile:
                 await Console.Error.WriteLineAsync(
