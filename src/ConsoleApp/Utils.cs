@@ -1,4 +1,7 @@
-﻿using ConsoleApp.Objects;
+﻿using Amazon.S3;
+using Amazon.S3.Model;
+using ConsoleApp.Exceptions;
+using ConsoleApp.Objects;
 
 namespace ConsoleApp;
 
@@ -82,14 +85,38 @@ public static class Utils
 
     public static string GetFullPath(string path)
     {
-        return Path.IsPathFullyQualified(path)
+        var result = Path.IsPathFullyQualified(path)
             ? path
             : Path.Combine(Environment.CurrentDirectory, path);
+
+        if (!Directory.Exists(result))
+        {
+            throw new DirectoryNotFoundException();
+        }
+
+        return result;
     }
 
-    public static void EnsureDirectoryWritable(string directoryPath)
+    public static async Task EnsureAlbumExistsAsync(IAmazonS3 amazonS3, Config config, string album, CancellationToken cancellationToken)
     {
-        var pathToFile = Path.Combine(directoryPath, Path.GetRandomFileName());
-        using var fileStream = File.Create(pathToFile, 1, FileOptions.DeleteOnClose);
+        var request = new ListObjectsV2Request
+        {
+            BucketName = config.BucketName,
+            Delimiter = "/"
+        };
+
+        var directories = new List<string>();
+        ListObjectsV2Response response;
+        do
+        {
+            response = await amazonS3.ListObjectsV2Async(request, cancellationToken);
+            directories.AddRange(response.CommonPrefixes);
+            request.ContinuationToken = response.NextContinuationToken;
+        } while (response.IsTruncated);
+
+        if (directories.All(d => d != album))
+        {
+            throw new NoAlbumException();
+        }
     }
 }

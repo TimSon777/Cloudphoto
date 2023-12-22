@@ -102,6 +102,17 @@ public class MakeSiteCommandHandler(IAmazonS3 amazonS3, Config config) : IComman
 
         await amazonS3.PutObjectAsync(putObjectRequest, cancellationToken);
 
+        var errorHtml = await File.ReadAllTextAsync($"{Constants.HtmlTemplatesDirectory}error.html", cancellationToken);
+        
+        var errorPutObjectRequest = new PutObjectRequest
+        {
+            Key = "error.html",
+            BucketName = config.BucketName,
+            ContentBody = errorHtml
+        };
+
+        await amazonS3.PutObjectAsync(errorPutObjectRequest, cancellationToken);
+
         await Console.Out.WriteLineAsync($"https://{config.BucketName}.website.yandexcloud.net/");
     }
 }
