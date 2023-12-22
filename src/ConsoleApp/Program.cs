@@ -121,10 +121,6 @@ static async Task<int> HandleAsync(IEnumerable<string> args, CancellationToken c
         return Code.Failure;
     }
 
-    foreach (var e in result.Errors)
-    {
-        Console.WriteLine(e);
-    }
     return result.Errors.All(e => Constants.SupportedErrors.Contains(e.ToString()!))
         ? Code.Success
         : Code.Failure;
