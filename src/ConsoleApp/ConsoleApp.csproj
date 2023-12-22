@@ -19,6 +19,9 @@
       <None Update="Resources\HtmlTemplates\*.html">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="Resources\HtmlTemplates\error.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

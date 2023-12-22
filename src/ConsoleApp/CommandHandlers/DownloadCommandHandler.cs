@@ -2,6 +2,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using ConsoleApp.Commands;
+using ConsoleApp.Exceptions;
 using ConsoleApp.Objects;
 
 namespace ConsoleApp.CommandHandlers;
@@ -17,6 +18,8 @@ public sealed class DownloadCommandHandler(IAmazonS3 amazonS3, Config config) : 
         };
 
         var path = Utils.GetFullPath(command.Path);
+
+        await Utils.EnsureAlbumExistsAsync(amazonS3, config, command.Album, cancellationToken);
 
         var results = await amazonS3.Paginators
             .ListObjects(listObjectsRequest).S3Objects
@@ -42,7 +45,7 @@ public sealed class DownloadCommandHandler(IAmazonS3 amazonS3, Config config) : 
         {
             if (verbose)
             {
-                await Console.Error.WriteLineAsync($"File {index} failed: while getting from aws. Actual status code: {response.HttpStatusCode}");
+                await Console.Error.WriteLineAsync($"File {index} failed: while getting from cloud. Actual status code: {response.HttpStatusCode}");
             }
             
             return false;

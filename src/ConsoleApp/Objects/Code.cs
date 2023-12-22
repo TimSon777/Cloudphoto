@@ -1,16 +1,7 @@
 ﻿namespace ConsoleApp.Objects;
 
-public enum Code
+public static class Code
 {
-    Success,
-    WrongProfile,
-    WrongCountLines,
-    WrongOptions,
-    ConfigFileNotFound,
-    AccessDenied,
-    InvalidCredentials,
-    DirectoryDoesntExist,
-    DirectoryAccessDenied,
-    YandexCloudDirectoryDoesntExist,
-    ObjectsNotFound
+    public const int Success = 0;
+    public const int Failure = 1;
 }

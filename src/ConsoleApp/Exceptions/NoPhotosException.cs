@@ -1,4 +1,4 @@
 ﻿namespace ConsoleApp.Exceptions;
 
 [Serializable]
-public sealed class NoObjectsException : Exception;
+public sealed class NoPhotosException : Exception;

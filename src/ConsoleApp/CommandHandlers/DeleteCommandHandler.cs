@@ -27,7 +27,6 @@ public sealed class DeleteCommandHandler(IAmazonS3 amazonS3, Config config) : IC
             BucketName = config.BucketName,
             Prefix = $"{album}/"
         };
-
         
         ListObjectsV2Response listObjectsV2Response;
         var count = 0;
@@ -48,7 +47,7 @@ public sealed class DeleteCommandHandler(IAmazonS3 amazonS3, Config config) : IC
 
         if (count == 0)
         {
-            throw new NoObjectsException();
+            throw new NoAlbumException();
         }
 
         await Console.Out.WriteLineAsync($"{count} files deleted");
@@ -62,7 +61,7 @@ public sealed class DeleteCommandHandler(IAmazonS3 amazonS3, Config config) : IC
             Key = key
         };
 
-        var _ = await amazonS3.GetObjectAsync(getObjectRequest, cancellationToken);
+        _ = await amazonS3.GetObjectAsync(getObjectRequest, cancellationToken);
 
         var deleteObjectRequest = new DeleteObjectRequest
         {

@@ -1,6 +1,7 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using ConsoleApp.Commands;
+using ConsoleApp.Exceptions;
 using ConsoleApp.Objects;
 
 namespace ConsoleApp.CommandHandlers;
@@ -11,34 +12,58 @@ public sealed class UploadCommandHandler(IAmazonS3 amazonS3, Config config) : IC
     {
         var path = Utils.GetFullPath(command.Path);
 
-        var tasks = new DirectoryInfo(path)
+        var photos = new DirectoryInfo(path)
             .GetFiles("*.*", SearchOption.TopDirectoryOnly)
             .Where(f => f.Extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase)
-                || f.Extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase))
-            .Select(async image => await ProcessImageAsync(image, command.Album))
+                        || f.Extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
-        await Task.WhenAll(tasks);
-
-        var message = tasks.Length switch
+        if (photos.Length == 0)
         {
-            0 => "Successful, files were not uploaded",
-            1 => "Successful, 1 file uploaded",
-            _ => $"Successful, {tasks.Length} files uploaded"
-        };
-        
-        await Console.Out.WriteLineAsync(message);
+            throw new NoPhotosException();
+        }
+
+        await using (var _ = File.OpenWrite(photos[0].FullName))
+        {
+        }
+
+        var tasks = photos
+            .Select(async (image, index) => await ProcessImageAsync(image, index, command.Verbose, command.Album))
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        await Console.Out.WriteLineAsync($"{results.Count(r => r)}/{results.Length} photos uploaded");
     }
 
-    private async Task ProcessImageAsync(FileSystemInfo image, string album)
+    private async Task<bool> ProcessImageAsync(FileSystemInfo image, int index, bool verbose, string album)
     {
-        var request = new PutObjectRequest
+        try
         {
-            Key = $"{album}/{image.Name}",
-            BucketName = config.BucketName,
-            FilePath = image.FullName
-        };
+            var request = new PutObjectRequest
+            {
+                Key = $"{album}/{image.Name}",
+                BucketName = config.BucketName,
+                FilePath = image.FullName
+            };
+            
+            await amazonS3.PutObjectAsync(request);
 
-        await amazonS3.PutObjectAsync(request);
+            if (verbose)
+            {
+                await Console.Out.WriteLineAsync($"{index}. {image.Name} processed");
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (verbose)
+            {
+                await Console.Out.WriteLineAsync($"{index}. {image.Name} doesn't processed ({ex.Message})");
+            }
+
+            return false;
+        }
     }
 }

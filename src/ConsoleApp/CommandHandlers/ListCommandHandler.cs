@@ -39,7 +39,7 @@ public sealed class ListCommandHandler(IAmazonS3 amazonS3, Config config) : ICom
 
         if (directories.Count == 0)
         {
-            throw new NoObjectsException();
+            throw new NoAlbumException();
         }
 
         for (var i = 0; i < directories.Count; i++)
@@ -64,7 +64,7 @@ public sealed class ListCommandHandler(IAmazonS3 amazonS3, Config config) : ICom
 
         if (names.Count == 0)
         {
-            throw new NoObjectsException();
+            throw new NoPhotosException();
         }
 
         for (var i = 0; i < names.Count; i++)
