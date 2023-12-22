@@ -8,6 +8,8 @@ dotnet publish --runtime `{runtime}` --configuration Release -p:PublishSingleFil
 - win-x64
 - linux-x64
 
+Располагаются в папке `build`
+
 Если нужен другой ([список](https://learn.microsoft.com/en-us/dotnet/core/rid-catalog)) напишите мне
 
 # Примечание
